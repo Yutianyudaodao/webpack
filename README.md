@@ -63,3 +63,18 @@ typescript
 npm i ts-loader typescript -D
 需要创建tsconfig.json的文件
 引入的包文件想使用ts: npm i @types/lodash -D
+
+六
+提高打包速度
+1.将引入的库文件：react,lodash 单独做打包，并将其作为全局变量引入
+2.将库文件以webpack.dll.js 打包进dll文件夹，"build:dll": "webpack --config ./build/webpack.dll.js"
+3.生成已经打包过的库的映射文件  webpack.DllPlugin
+4.打包项目时，结合映射文件和引入的库文件做分析之后，不再对映射文件中的库进行二次打包  webpack.DllReferencePlugin
+5.对HTML文件中js的插入做设置  AddAssetHtmlPlugin
+
+提升打包速度总结
+1.控制包文件大小 tree shaking
+2.多进程打包 happypack parallel-webpack
+3.合理使用sourceMap
+4.开发环境使用devServer,环境内存
+5.开发环境删除无用插件，loader

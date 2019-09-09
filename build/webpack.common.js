@@ -1,13 +1,45 @@
 const path = require('path')
+const fs = require('fs')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const {
     CleanWebpackPlugin
 } = require('clean-webpack-plugin');
+const AddAssetHtmlPlugin = require('add-asset-html-webpack-plugin');
 const CopyrightWebpackPlugin = require('../plugins/copyright-webpack-plugin')
 const webpack = require('webpack')
 const merge = require('webpack-merge')
 const devConfig = require('./webpack.dev.js')
 const prodConfig = require('./webpack.prod.js')
+
+const plugins = [
+    new HtmlWebpackPlugin({
+        template: 'src/index.html'
+    }), //会在打包结束后生成一个html文件，并把打包生成的js文件引入html
+    new CleanWebpackPlugin(),
+    new webpack.ProvidePlugin({
+        $: 'jquery'  //如果某个模块中用了$，就会在该模块中自动引用jquery
+    }),
+    new CopyrightWebpackPlugin(),
+
+]
+
+const files = fs.readdirSync(path.resolve(__dirname,'../dll'))
+files.forEach(file => {
+    if(/.*\.dll.js/.test(file)){
+        plugins.push(
+            new AddAssetHtmlPlugin({  //往html中插入其他的文件
+                filepath: path.resolve(__dirname,'../dll',file)
+            }),
+        )
+    }
+    if(/.*\.manifest.json/.test(file)){
+        plugins.push(
+            new webpack.DllReferencePlugin({
+                manifest: path.resolve(__dirname,'../dll',file)
+            })
+        )
+    }
+})
 
 const commonConfig = {
     entry: {
@@ -78,16 +110,7 @@ const commonConfig = {
             }
         ]
     },
-    plugins: [
-        new HtmlWebpackPlugin({
-            template: 'src/index.html'
-        }), //会在打包结束后生成一个html文件，并把打包生成的js文件引入html
-        new CleanWebpackPlugin(),
-        new webpack.ProvidePlugin({
-            $: 'jquery'  //如果某个模块中用了$，就会在该模块中自动引用jquery
-        }),
-        new CopyrightWebpackPlugin()
-    ],
+    plugins,
     optimization: {
         splitChunks: {
             chunks: 'async', //异步引用，all,同步时会去找cacheGroups
